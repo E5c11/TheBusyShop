@@ -1,16 +1,14 @@
 package com.ikhokha.techcheck.viewmodels
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.*
 import com.google.firebase.auth.FirebaseAuthException
 import com.ikhokha.techcheck.data.datastore.GUEST_EMAIL
 import com.ikhokha.techcheck.data.datastore.UserPreferences
-import com.ikhokha.techcheck.repositories.LoginFirebaseRepository
+import com.ikhokha.techcheck.data.entities.Product
+import com.ikhokha.techcheck.repositories.FirebaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
@@ -19,11 +17,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val loginRepo: LoginFirebaseRepository,
+    private val fbRepo: FirebaseRepository,
     userPref: UserPreferences
 ): ViewModel() {
 
     private val loginPref = userPref.loginPref
+    private lateinit var _products: MutableLiveData<List<Product>>
+    lateinit var products: LiveData<List<Product>>
     private val homeChannel = Channel<HomeEvents>()
     val homeEvent = homeChannel.receiveAsFlow()
 
@@ -39,7 +39,8 @@ class HomeViewModel @Inject constructor(
         loginPref.collect {
             if (it.email != GUEST_EMAIL) {
                 try {
-                    loginRepo.signInUser(it.email, it.password).let {
+                    fbRepo.signInUser(it.email, it.password).let {
+                        fetchProducts()
                         homeChannel.send(HomeEvents.LoggedInEvent)
                     }
                 } catch (e: FirebaseAuthException) {
@@ -47,6 +48,10 @@ class HomeViewModel @Inject constructor(
                 }
             } else homeChannel.send(HomeEvents.NotLoggedInEvent)
         }
+    }
+
+    private fun fetchProducts() {
+        products = fbRepo.getProducts().asLiveData()
     }
 
     sealed class HomeEvents {

@@ -8,9 +8,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.ikhokha.techcheck.R
+import com.ikhokha.techcheck.data.entities.Product
 import com.ikhokha.techcheck.databinding.HomeFragmentBinding
+import com.ikhokha.techcheck.utils.adapters.ProductAdapter
 import com.ikhokha.techcheck.utils.exhaustive
 import com.ikhokha.techcheck.utils.getRotateAnimation
 import com.ikhokha.techcheck.viewmodels.HomeViewModel
@@ -20,10 +25,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
-class HomeFragment: Fragment(R.layout.home_fragment) {
+class HomeFragment: Fragment(R.layout.home_fragment), ProductAdapter.OnItemClickedListener {
 
     private lateinit var binding : HomeFragmentBinding
     private val viewModel: HomeViewModel by viewModels()
+    private lateinit var productAdapter: ProductAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,20 +37,20 @@ class HomeFragment: Fragment(R.layout.home_fragment) {
 
         checkLogin()
         setListeners()
+        setProducts()
         Log.d("myT", "Home: ")
     }
 
     private fun checkLogin() {
-        binding.progress.animation = getRotateAnimation()
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.homeEvent.collect { event ->
                 when (event) {
                     is HomeViewModel.HomeEvents.LoggedInEvent -> {
                         binding.apply {
-                            progress.animation = null
                             progress.visibility = View.GONE
                             login.visibility = View.GONE
                         }
+                        observeProducts()
                         Snackbar.make(requireView(), "Login success", Snackbar.LENGTH_LONG).show()
                     }
                     HomeViewModel.HomeEvents.NotLoggedInEvent -> {
@@ -56,12 +62,33 @@ class HomeFragment: Fragment(R.layout.home_fragment) {
                 }.exhaustive
             }
         }
+
+    }
+
+    private fun observeProducts() {
+        viewModel.products.observe(viewLifecycleOwner) {
+                productAdapter.submitList(it)
+            Log.d("myT", "observeProducts: $it")
+        }
+    }
+
+    private fun setProducts() {
+        binding.productsRecycler.apply {
+            GridLayoutManager(requireContext(), 2, RecyclerView.VERTICAL, false).apply {
+                layoutManager = this
+                productAdapter = ProductAdapter(this@HomeFragment, requireActivity().application)
+                adapter = productAdapter
+            }
+        }
     }
 
     private fun setListeners() {
         binding.login.setOnClickListener { findNavController()
             .navigate(HomeFragmentDirections.actionHomeFragmentToLoginFragment()) }
+    }
 
+    override fun onItemClick(product: Product) {
+        TODO("Not yet implemented")
     }
 
 }

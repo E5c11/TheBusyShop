@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">The Busy Shop</string>
+
+    <string name="product_price">R%1$.2f</string>
 </resources>

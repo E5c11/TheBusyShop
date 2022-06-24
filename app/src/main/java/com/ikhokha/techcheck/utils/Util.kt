@@ -2,6 +2,13 @@ package com.ikhokha.techcheck.utils
 
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 fun String.onlyLetters() = all { it.isLetter() }
 
@@ -16,4 +23,19 @@ fun getRotateAnimation() =
         startOffset = 500
         repeatMode = Animation.RESTART
         repeatCount = Animation.INFINITE
+    }
+
+fun DatabaseReference.observeValue(): Flow<DataSnapshot?> =
+    callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                offer(snapshot)
+            }
+        }
+        addValueEventListener(listener)
+        awaitClose { removeEventListener(listener) }
     }

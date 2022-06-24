@@ -3,6 +3,7 @@ package com.ikhokha.techcheck.dagger
 import android.app.Application
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
 import com.ikhokha.techcheck.utils.ConnectionLiveData
 import dagger.Module
 import dagger.Provides
@@ -20,10 +21,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirestore() = FirebaseDatabase.getInstance()
+    fun provideFirebaseDatabase() = FirebaseDatabase.getInstance()
 
     @Provides
     @Singleton
     fun provideFireAuth() = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage() = FirebaseStorage.getInstance()
 
 }
