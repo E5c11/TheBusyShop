@@ -16,4 +16,7 @@
     <style name="ShapeAppearanceOverlay.App.CornerSize50Percent" parent="">
         <item name="cornerSize">10%</item>
     </style>
+    <style name="MyDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:colorBackground">@color/colorGreenTransparent</item>
+    </style>
 </resources>

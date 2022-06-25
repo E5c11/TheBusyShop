@@ -1,24 +1,25 @@
 package com.ikhokha.techcheck.viewmodels
 
-import android.util.Log
 import androidx.lifecycle.*
 import com.google.firebase.auth.FirebaseAuthException
 import com.ikhokha.techcheck.data.datastore.GUEST_EMAIL
 import com.ikhokha.techcheck.data.datastore.UserPreferences
 import com.ikhokha.techcheck.data.entities.Product
 import com.ikhokha.techcheck.repositories.FirebaseRepository
+import com.ikhokha.techcheck.repositories.LocalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val fbRepo: FirebaseRepository,
-    userPref: UserPreferences
+    userPref: UserPreferences,
+    private val localRepo: LocalRepository
 ): ViewModel() {
 
     private val loginPref = userPref.loginPref
@@ -30,12 +31,10 @@ class HomeViewModel @Inject constructor(
     init {
         viewModelScope.launch(IO) {
             checkLogin()
-            Log.d("myT", "home: viewmodel ")
         }
     }
 
     private fun checkLogin() = viewModelScope.launch(IO) {
-        Log.d("myT", "checkLogin: ")
         loginPref.collect {
             if (it.email != GUEST_EMAIL) {
                 try {
@@ -52,6 +51,10 @@ class HomeViewModel @Inject constructor(
 
     private fun fetchProducts() {
         products = fbRepo.getProducts().asLiveData()
+    }
+
+    fun insertItem(product: Product) = viewModelScope.launch(IO) {
+        localRepo.insertProduct(product)
     }
 
     sealed class HomeEvents {

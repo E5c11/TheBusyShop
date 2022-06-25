@@ -12,16 +12,16 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.google.firebase.storage.FirebaseStorage
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.data.entities.Product
-import com.ikhokha.techcheck.databinding.ProductItemBinding
+import com.ikhokha.techcheck.databinding.BasketItemBinding
 import com.ikhokha.techcheck.repositories.STORAGE_BASE_URL
 
-class ProductAdapter(private val listener: OnItemClickedListener, val app: Application, val fbStorage: FirebaseStorage)
-    : ListAdapter<Product, ProductAdapter.ViewHolder>(
+class BasketAdapter(private val listener: OnItemClickedListener, val app: Application, val fbStorage: FirebaseStorage)
+    : ListAdapter<Product, BasketAdapter.ViewHolder>(
     DiffCallback()
 ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ProductItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = BasketItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
@@ -30,7 +30,7 @@ class ProductAdapter(private val listener: OnItemClickedListener, val app: Appli
         holder.bind(product)
     }
 
-    inner class ViewHolder(private val binding: ProductItemBinding): RecyclerView.ViewHolder(binding.root) {
+    inner class ViewHolder(private val binding: BasketItemBinding): RecyclerView.ViewHolder(binding.root) {
 
         init {
             binding.root.setOnClickListener {
@@ -48,6 +48,7 @@ class ProductAdapter(private val listener: OnItemClickedListener, val app: Appli
                     .into(image)
                 description.text = product.description
                 price.text = app.getString(R.string.product_price, product.price)
+                quantity.text = "x ${product.quantity}"
             }
         }
     }

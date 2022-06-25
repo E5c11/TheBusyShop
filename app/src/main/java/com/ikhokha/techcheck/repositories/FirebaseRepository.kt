@@ -21,12 +21,10 @@ const val STORAGE_BASE_URL = "gs://the-busy-shop.appspot.com/"
 @Singleton
 class FirebaseRepository @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    fbDatabase: FirebaseDatabase,
-    private val fbStorage: FirebaseStorage
+    fbDatabase: FirebaseDatabase
 ) {
 
     private val database = fbDatabase.reference
-    private val storage = fbStorage.reference
 
     suspend fun signInUser(email: String, password: String): FirebaseUser =
         firebaseAuth.signInWithEmailAndPassword(email, password).await().user ?:
@@ -35,19 +33,14 @@ class FirebaseRepository @Inject constructor(
     fun getProducts(): Flow<List<Product>> = database.observeValue()
             .map { data ->
                 val list = mutableListOf<Product>()
-                Log.d("myT", "getProducts: ${data}")
                 for (snap in data!!.children) {
                     val result = snap.getValue<Product>()
-                    result?.apply {
-                        imageUrl = getProductImageUrl(image)
-                        Log.d("myT", "getProducts: ${imageUrl}")
-                        id = snap.key
-                    }?.let { list.add(it) }
+                    snap.key?.let {
+                        result?.id = it
+                        list.add(result!!)
+                    }
                 }
                 list
             }.catch { it.stackTrace }
-
-    private suspend fun getProductImageUrl(imageName: String?) =
-        fbStorage.getReferenceFromUrl("${STORAGE_BASE_URL}$imageName")
 
 }

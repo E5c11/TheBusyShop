@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.storage.FirebaseStorage
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.data.entities.Product
 import com.ikhokha.techcheck.databinding.HomeFragmentBinding
@@ -23,6 +24,7 @@ import com.ikhokha.techcheck.viewmodels.LoginViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment: Fragment(R.layout.home_fragment), ProductAdapter.OnItemClickedListener {
@@ -30,6 +32,7 @@ class HomeFragment: Fragment(R.layout.home_fragment), ProductAdapter.OnItemClick
     private lateinit var binding : HomeFragmentBinding
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var productAdapter: ProductAdapter
+    @Inject lateinit var fbStorage: FirebaseStorage
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -51,7 +54,7 @@ class HomeFragment: Fragment(R.layout.home_fragment), ProductAdapter.OnItemClick
                             login.visibility = View.GONE
                         }
                         observeProducts()
-                        Snackbar.make(requireView(), "Login success", Snackbar.LENGTH_LONG).show()
+                        Snackbar.make(requireView(), "Login success", Snackbar.LENGTH_SHORT).show()
                     }
                     HomeViewModel.HomeEvents.NotLoggedInEvent -> {
                         Log.d("myT", "checkLogin: not logged in")
@@ -76,19 +79,23 @@ class HomeFragment: Fragment(R.layout.home_fragment), ProductAdapter.OnItemClick
         binding.productsRecycler.apply {
             GridLayoutManager(requireContext(), 2, RecyclerView.VERTICAL, false).apply {
                 layoutManager = this
-                productAdapter = ProductAdapter(this@HomeFragment, requireActivity().application)
+                productAdapter = ProductAdapter(this@HomeFragment, requireActivity().application, fbStorage)
                 adapter = productAdapter
             }
         }
     }
 
     private fun setListeners() {
-        binding.login.setOnClickListener { findNavController()
-            .navigate(HomeFragmentDirections.actionHomeFragmentToLoginFragment()) }
+        binding.apply {
+            login.setOnClickListener { findNavController()
+                .navigate(HomeFragmentDirections.actionHomeFragmentToLoginFragment()) }
+            basket.setOnClickListener { findNavController()
+                .navigate(HomeFragmentDirections.actionHomeFragmentToBasketDialogFragment()) }
+        }
     }
 
     override fun onItemClick(product: Product) {
-        TODO("Not yet implemented")
+        viewModel.insertItem(product)
     }
 
 }
