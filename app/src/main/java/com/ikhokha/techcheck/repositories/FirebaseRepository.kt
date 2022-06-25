@@ -1,14 +1,15 @@
 package com.ikhokha.techcheck.repositories
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.getValue
-import com.google.firebase.storage.FirebaseStorage
 import com.ikhokha.techcheck.data.entities.Product
+import com.ikhokha.techcheck.utils.ValueEventResult
+import com.ikhokha.techcheck.utils.awaitSingleValue
 import com.ikhokha.techcheck.utils.observeValue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -42,5 +43,8 @@ class FirebaseRepository @Inject constructor(
                 }
                 list
             }.catch { it.stackTrace }
+
+    suspend fun getItem(code: String): ValueEventResult =
+        database.child(code).awaitSingleValue()
 
 }

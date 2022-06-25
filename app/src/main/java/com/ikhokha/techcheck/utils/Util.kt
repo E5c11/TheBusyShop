@@ -1,14 +1,22 @@
 package com.ikhokha.techcheck.utils
 
-import android.view.animation.Animation
-import android.view.animation.RotateAnimation
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.drawable.TransitionDrawable
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
+import com.ikhokha.techcheck.R
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+
 
 fun String.onlyLetters() = all { it.isLetter() }
 
@@ -17,14 +25,7 @@ infix fun <T> Boolean.then(param: T): T? = if (this) param else null
 val <T> T.exhaustive: T
     get() = this
 
-fun getRotateAnimation() =
-    RotateAnimation(0f, 360f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f).apply {
-        duration = 1000
-        startOffset = 500
-        repeatMode = Animation.RESTART
-        repeatCount = Animation.INFINITE
-    }
-
+@ExperimentalCoroutinesApi
 fun DatabaseReference.observeValue(): Flow<DataSnapshot?> =
     callbackFlow {
         val listener = object : ValueEventListener {
@@ -33,9 +34,39 @@ fun DatabaseReference.observeValue(): Flow<DataSnapshot?> =
             }
 
             override fun onDataChange(snapshot: DataSnapshot) {
-                offer(snapshot)
+                trySend(snapshot).isSuccess
             }
         }
         addValueEventListener(listener)
         awaitClose { removeEventListener(listener) }
     }
+
+sealed class ValueEventResult {
+    class Success(val dataSnapshot: DataSnapshot): ValueEventResult()
+    class Error(val error: DatabaseError): ValueEventResult()
+}
+
+@ExperimentalCoroutinesApi
+suspend fun DatabaseReference.awaitSingleValue(onCancellation: ((cause: Throwable) -> Unit)? = null) =
+    suspendCancellableCoroutine<ValueEventResult> { continuation ->
+
+    val valueEventListener = object: ValueEventListener{
+        override fun onCancelled(error: DatabaseError) {
+            continuation.resume(ValueEventResult.Error(error = error), onCancellation)
+        }
+        override fun onDataChange(snapshot: DataSnapshot) {
+            continuation.resume(ValueEventResult.Success(snapshot), onCancellation)
+        }
+    }
+    addListenerForSingleValueEvent(valueEventListener)
+    continuation.invokeOnCancellation { removeEventListener(valueEventListener) }
+}
+
+fun hasCameraPermission(context: Context) =
+    (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED)
+
+fun getTransition(ctx: Context) = TransitionDrawable( arrayOf(
+            AppCompatResources.getDrawable(ctx, R.drawable.camera),
+            AppCompatResources.getDrawable(ctx, R.drawable.scanner)
+        ))

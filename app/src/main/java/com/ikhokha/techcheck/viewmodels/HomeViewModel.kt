@@ -1,12 +1,16 @@
 package com.ikhokha.techcheck.viewmodels
 
+import android.app.Application
 import androidx.lifecycle.*
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.database.ktx.getValue
+import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.data.datastore.GUEST_EMAIL
 import com.ikhokha.techcheck.data.datastore.UserPreferences
 import com.ikhokha.techcheck.data.entities.Product
 import com.ikhokha.techcheck.repositories.FirebaseRepository
 import com.ikhokha.techcheck.repositories.LocalRepository
+import com.ikhokha.techcheck.utils.ValueEventResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.channels.Channel
@@ -19,11 +23,11 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val fbRepo: FirebaseRepository,
     userPref: UserPreferences,
+    private val app: Application,
     private val localRepo: LocalRepository
-): ViewModel() {
+): AndroidViewModel(app) {
 
     private val loginPref = userPref.loginPref
-    private lateinit var _products: MutableLiveData<List<Product>>
     lateinit var products: LiveData<List<Product>>
     private val homeChannel = Channel<HomeEvents>()
     val homeEvent = homeChannel.receiveAsFlow()
@@ -39,7 +43,7 @@ class HomeViewModel @Inject constructor(
             if (it.email != GUEST_EMAIL) {
                 try {
                     fbRepo.signInUser(it.email, it.password).let {
-                        fetchProducts()
+//                        fetchProducts()
                         homeChannel.send(HomeEvents.LoggedInEvent)
                     }
                 } catch (e: FirebaseAuthException) {
@@ -53,13 +57,33 @@ class HomeViewModel @Inject constructor(
         products = fbRepo.getProducts().asLiveData()
     }
 
-    fun insertItem(product: Product) = viewModelScope.launch(IO) {
-        localRepo.insertProduct(product)
+    fun insertItem(code: String?) = viewModelScope.launch(IO) {
+        if (code != null)
+            when (val result = fbRepo.getItem(code)) {
+                is ValueEventResult.Error -> homeChannel.send(HomeEvents.Error(app.getString(R.string.error)))
+                is ValueEventResult.Success -> {
+                    result.dataSnapshot.apply {
+                        if (this.exists()) {
+                            val product = getValue<Product>()
+                            key?.let {
+                                product?.id = it
+                            }
+                            product?.let {
+                                localRepo.insertProduct(it)
+                                homeChannel.send(HomeEvents.Success(app.getString(R.string.product_added, it.description)))
+                            }
+                        } else homeChannel.send(HomeEvents.Error(app.getString(R.string.error_dns)))
+                    }
+                }
+            }
+        else homeChannel.send(HomeEvents.Error(app.getString(R.string.error_barcode)))
     }
 
     sealed class HomeEvents {
         object NotLoggedInEvent: HomeEvents()
         object LoggedInEvent: HomeEvents()
+        class Error(val error: String): HomeEvents()
+        class Success(val success: String): HomeEvents()
     }
 
 }

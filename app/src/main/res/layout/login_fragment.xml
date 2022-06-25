@@ -88,11 +88,11 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
-    <de.hdodenhof.circleimageview.CircleImageView
+    <ImageView
         android:id="@+id/progress"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/loading"
+        android:src="@drawable/progress_animation"
         android:visibility="gone"
         app:layout_constraintWidth_percent="0.25"
         app:layout_constraintDimensionRatio="1:1"

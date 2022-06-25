@@ -11,7 +11,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.databinding.LoginFragmentBinding
 import com.ikhokha.techcheck.utils.exhaustive
-import com.ikhokha.techcheck.utils.getRotateAnimation
 import com.ikhokha.techcheck.viewmodels.LoginViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -27,17 +26,13 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = LoginFragmentBinding.bind(view)
-        setProgressBar()
         setListeners()
         setObservers()
         Log.d(TAG, "Login: ")
     }
 
     private fun setObservers() {
-        viewModel.progress.observe(viewLifecycleOwner) {
-            if (it == View.GONE) binding.progress.animation = null
-            binding.progress.visibility = it
-        }
+        viewModel.progress.observe(viewLifecycleOwner) { binding.progress.visibility = it }
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.loginEvent.collect { event ->
                 when (event) {
@@ -50,10 +45,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                 }.exhaustive
             }
         }
-    }
-
-    private fun setProgressBar() {
-        binding.progress.animation = getRotateAnimation()
     }
 
     private fun setListeners() {
