@@ -30,7 +30,7 @@ class CodeAnalyser(
             scanner.process(inputImage)
                 .addOnSuccessListener { barcodes ->
                     for (barcode in barcodes) {
-                        listener.onItemClick(barcode.rawValue)
+                        listener.onItemScanned(barcode.rawValue)
                         break
                     }
                 }
@@ -42,6 +42,6 @@ class CodeAnalyser(
     }
 
     interface OnItemScannedListener  {
-        fun onItemClick(code: String?)
+        fun onItemScanned(code: String?)
     }
 }

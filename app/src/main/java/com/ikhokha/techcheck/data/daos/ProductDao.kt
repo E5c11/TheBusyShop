@@ -18,4 +18,7 @@ interface ProductDao {
 
     @Query("SELECT * FROM product_table")
     fun getBasket(): Flow<List<Product>>
+
+    @Query ("DELETE FROM product_table")
+    fun deleteAll()
 }

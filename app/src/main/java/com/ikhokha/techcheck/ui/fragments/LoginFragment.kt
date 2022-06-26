@@ -48,10 +48,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     }
 
     private fun setListeners() {
-//        binding.emailInput.setOnFocusChangeListener { _, b ->
-//            if (b) changeConstraints()
-//            else viewModel.isValidEmail(getEmailText())
-//        }
+        binding.emailInput.requestFocus()
         binding.submit.setOnClickListener{
             viewModel.loginUser(getEmailText(), getPasswordText())
         }

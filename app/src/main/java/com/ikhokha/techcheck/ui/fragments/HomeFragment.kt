@@ -83,7 +83,10 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
                 if ( previewView.visibility == View.GONE) startCamera()
                 centreImg.visibility = View.GONE
                 cameraCircle.visibility = View.GONE
+                scan.text = "Scan an item"
             }
+            allItems.setOnClickListener { findNavController()
+                .navigate(HomeFragmentDirections.actionHomeFragmentToProductsFragment())}
         }
     }
 
@@ -145,12 +148,13 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    override fun onItemClick(code: String?) {
+    override fun onItemScanned(code: String?) {
         cameraProvider.unbindAll()
         binding.apply {
             previewView.visibility = View.GONE
             centreImg.visibility = View.VISIBLE
             cameraCircle.visibility = View.VISIBLE
+            scan.text = "Scan an item"
         }
         viewModel.insertItem(code)
     }

@@ -15,6 +15,7 @@ import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.data.entities.Product
 import com.ikhokha.techcheck.databinding.BasketLayoutBinding
 import com.ikhokha.techcheck.utils.adapters.BasketAdapter
+import com.ikhokha.techcheck.utils.then
 import com.ikhokha.techcheck.viewmodels.BasketViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -64,7 +65,10 @@ class BasketDialogFragment : DialogFragment(R.layout.basket_layout), BasketAdapt
     private fun setObservers() {
         viewModel.products.observe(viewLifecycleOwner) {
             basketAdapter.submitList(it)
-            binding.progress.visibility = View.GONE
+            binding.apply {
+                progress.visibility = View.GONE
+                if (it.isNotEmpty()) empty.visibility = View.GONE
+            }
         }
         viewModel.total.observe(viewLifecycleOwner) {
             binding.total.text = getString(R.string.product_price, it)
@@ -72,6 +76,6 @@ class BasketDialogFragment : DialogFragment(R.layout.basket_layout), BasketAdapt
     }
 
     override fun onItemClick(product: Product) {
-        TODO("Not yet implemented")
+        // allow to add, subtract or remove item
     }
 }

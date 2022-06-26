@@ -41,11 +41,9 @@ class OrderViewModel @Inject constructor(
     val orderEvent = orderChannel.receiveAsFlow()
     private lateinit var file: File
 
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            getSummary()
-        }
-    }
+    init { getSummary() }
+
+    fun deleteAll() = viewModelScope.launch(IO) { localRepo.deleteAll() }
 
     private fun getSummary() = viewModelScope.launch(IO) {
         localRepo.basketItems.collect { items ->

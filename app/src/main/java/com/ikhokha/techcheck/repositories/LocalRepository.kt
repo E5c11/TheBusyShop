@@ -13,12 +13,14 @@ class LocalRepository @Inject constructor(
 
     val basketItems = productDao.getBasket()
 
-    suspend fun insertProduct(movie: Product) {
+    suspend fun insertProduct(product: Product) {
         try {
-            productDao.insert(movie)
+            productDao.insert(product)
         } catch (e: SQLiteConstraintException) {
-            productDao.updateItem(movie.id)
+            productDao.updateItem(product.id)
         }
     }
+
+    suspend fun deleteAll() = productDao.deleteAll()
 
 }

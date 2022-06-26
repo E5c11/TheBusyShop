@@ -1,5 +1,6 @@
 package com.ikhokha.techcheck.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -19,8 +20,11 @@ class BasketViewModel @Inject constructor(
     val total: LiveData<Double> = _total
 
     val products: LiveData<List<Product>> = Transformations.map(localRepo.basketItems.asLiveData()) { list ->
-        var tempTotal: Double = 0.0
-        list.forEach { tempTotal += it.price ?: 0.0}
+        var tempTotal = 0.0
+        list.forEach {
+            tempTotal += it.price?.times(it.quantity) ?: 0.0
+            Log.d("myT", "${it.description}: ${it.price}")
+        }
         _total.postValue(tempTotal)
         list
     }

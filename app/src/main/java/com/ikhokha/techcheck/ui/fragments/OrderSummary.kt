@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.databinding.OrderSummaryLayoutBinding
@@ -30,6 +31,8 @@ class OrderSummary: Fragment(R.layout.order_summary_layout) {
     private fun setListeners() {
         binding.share.setOnClickListener {
             viewModel.share()
+            findNavController().navigate(OrderSummaryDirections.actionOrderSummaryToHomeFragment())
+            viewModel.deleteAll()
         }
         lifecycleScope.launchWhenStarted {
             viewModel.orderEvent.collect{ event ->
