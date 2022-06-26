@@ -65,6 +65,12 @@ suspend fun DatabaseReference.awaitSingleValue(onCancellation: ((cause: Throwabl
 fun hasCameraPermission(context: Context) =
     (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED)
+fun hasReadPermission(context: Context) =
+    (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+            == PackageManager.PERMISSION_GRANTED)
+fun hasWritePermission(context: Context) =
+    (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            == PackageManager.PERMISSION_GRANTED)
 
 fun getTransition(ctx: Context) = TransitionDrawable( arrayOf(
             AppCompatResources.getDrawable(ctx, R.drawable.camera),

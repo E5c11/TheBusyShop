@@ -1,8 +1,11 @@
 package com.ikhokha.techcheck.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.*
-import com.google.firebase.auth.FirebaseAuthException
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ktx.getValue
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.data.datastore.GUEST_EMAIL
@@ -22,6 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val fbRepo: FirebaseRepository,
+    private val fbAuth: FirebaseAuth,
     userPref: UserPreferences,
     private val app: Application,
     private val localRepo: LocalRepository
@@ -31,6 +35,7 @@ class HomeViewModel @Inject constructor(
     lateinit var products: LiveData<List<Product>>
     private val homeChannel = Channel<HomeEvents>()
     val homeEvent = homeChannel.receiveAsFlow()
+    var loggedIn = false
 
     init {
         viewModelScope.launch(IO) {
@@ -39,18 +44,11 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun checkLogin() = viewModelScope.launch(IO) {
-        loginPref.collect {
-            if (it.email != GUEST_EMAIL) {
-                try {
-                    fbRepo.signInUser(it.email, it.password).let {
-//                        fetchProducts()
-                        homeChannel.send(HomeEvents.LoggedInEvent)
-                    }
-                } catch (e: FirebaseAuthException) {
-                    homeChannel.send(HomeEvents.NotLoggedInEvent)
-                }
-            } else homeChannel.send(HomeEvents.NotLoggedInEvent)
+        if (fbAuth.currentUser != null) {
+            homeChannel.send(HomeEvents.LoggedInEvent)
+            loggedIn = true
         }
+        else homeChannel.send(HomeEvents.NotLoggedInEvent)
     }
 
     private fun fetchProducts() {

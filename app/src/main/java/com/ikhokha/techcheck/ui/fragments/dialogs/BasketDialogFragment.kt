@@ -7,6 +7,7 @@ import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.storage.FirebaseStorage
@@ -54,14 +55,19 @@ class BasketDialogFragment : DialogFragment(R.layout.basket_layout), BasketAdapt
 
     private fun setListeners() {
         binding.checkout.setOnClickListener {
-            Snackbar.make(requireView(), "Success!! Thank you for your purchase.", Snackbar.LENGTH_LONG).show()
+//            Snackbar.make(requireView(), "Success!! Thank you for your purchase.", Snackbar.LENGTH_LONG).show()
+            findNavController().navigate(BasketDialogFragmentDirections.actionBasketDialogFragmentToOrderSummary())
         }
+
     }
 
     private fun setObservers() {
         viewModel.products.observe(viewLifecycleOwner) {
             basketAdapter.submitList(it)
             binding.progress.visibility = View.GONE
+        }
+        viewModel.total.observe(viewLifecycleOwner) {
+            binding.total.text = getString(R.string.product_price, it)
         }
     }
 

@@ -15,17 +15,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.storage.FirebaseStorage
 import com.ikhokha.techcheck.R
 import com.ikhokha.techcheck.databinding.HomeFragmentBinding
+import com.ikhokha.techcheck.utils.*
 import com.ikhokha.techcheck.utils.adapters.CodeAnalyser
-import com.ikhokha.techcheck.utils.adapters.ProductAdapter
-import com.ikhokha.techcheck.utils.exhaustive
-import com.ikhokha.techcheck.utils.getTransition
-import com.ikhokha.techcheck.utils.hasCameraPermission
 import com.ikhokha.techcheck.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -53,19 +48,14 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
     }
 
     private fun checkLogin() {
+        viewModel.loggedIn then showButton()
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.homeEvent.collect { event ->
                 when (event) {
                     is HomeViewModel.HomeEvents.LoggedInEvent -> {
-                        binding.apply {
-                            centreImg.setImageDrawable(getTransition(requireContext()))
-                            centreImg.visibility = View.VISIBLE
-                            cameraCircle.visibility = View.VISIBLE
-                            login.visibility = View.GONE
-                        }
-                        showSnackbar(getString(R.string.login_success), Snackbar.LENGTH_SHORT)
+                        showButton()
                     }
-                    HomeViewModel.HomeEvents.NotLoggedInEvent -> findNavController()
+                    is HomeViewModel.HomeEvents.NotLoggedInEvent -> findNavController()
                             .navigate(HomeFragmentDirections.actionHomeFragmentToLoginFragment())
                     is HomeViewModel.HomeEvents.Error -> {
                         if (event.error == getString(R.string.error_barcode))
@@ -98,7 +88,8 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
     }
 
     private fun requestPermission() {
-        if (hasCameraPermission(requireContext())) return
+        if (hasCameraPermission(requireContext()) && hasReadPermission(requireContext()) &&
+            hasWritePermission(requireContext())) return
         else askPermission()
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -114,7 +105,8 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
 
     private fun askPermission() {
         ActivityCompat.requestPermissions(requireActivity(),
-            arrayOf(Manifest.permission.CAMERA), requestCode)
+            arrayOf(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE), requestCode)
     }
 
     private fun startCamera() {
@@ -125,14 +117,12 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
 
-            // Preview
             val preview = Preview.Builder()
                 .build()
                 .also {
                     it.setSurfaceProvider(binding.previewView.surfaceProvider)
                 }
 
-            // Image analyzer
             val imageAnalyzer = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
@@ -140,14 +130,11 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
                     it.setAnalyzer(cameraExecutor, CodeAnalyser(this@HomeFragment))
                 }
 
-            // Select back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
-                // Unbind use cases before rebinding
                 cameraProvider.unbindAll()
 
-                // Bind use cases to camera
                 cameraProvider.bindToLifecycle(
                     this, cameraSelector, preview, imageAnalyzer
                 )
@@ -166,6 +153,13 @@ class HomeFragment: Fragment(R.layout.home_fragment), CodeAnalyser.OnItemScanned
             cameraCircle.visibility = View.VISIBLE
         }
         viewModel.insertItem(code)
+    }
+
+    private fun showButton() = binding.apply {
+        centreImg.setImageDrawable(getTransition(requireContext()))
+        centreImg.visibility = View.VISIBLE
+        cameraCircle.visibility = View.VISIBLE
+        login.visibility = View.GONE
     }
 
     override fun onDestroy() {
